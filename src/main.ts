@@ -1,13 +1,11 @@
 import * as nut from '@nut-tree-fork/nut-js';
 import { confirm, input, number, select } from '@inquirer/prompts';
-import { ConfigInterface, TempConfigInterface } from './interfaces/config.interface.ts';
-import { fileExists, writeConfigToFile } from './tools.ts';
-
-const configPath = 'mouseMovement.config';
+import { Config } from './interfaces/config.interface.ts';
+import { CONFIG_PATH, fileExists, writeConfigToFile } from './tools.ts';
 
 const workerUrl = new URL('./mouseMovement.ts', import.meta.url).href;
 
-if (!fileExists(configPath)) {
+if (!fileExists(CONFIG_PATH)) {
   await editConfig();
 }
 let worker: Worker | null = createWorker();
@@ -18,51 +16,54 @@ function createWorker(): Worker {
   return new Worker(workerUrl, { type: 'module' });
 }
 
+async function stopWorker(): Promise<void> {
+  if (worker === null) return;
+  worker.postMessage('stop');
+  // Give the worker a tick to exit its loop cleanly before terminating.
+  await new Promise((resolve) => setTimeout(resolve, 50));
+  worker.terminate();
+  worker = null;
+}
+
 async function operations() {
-  const operationsAnswer = await select({
-    message: 'Which operation do you want to perform?',
-    choices: [
-      { name: 'Quit the program', value: 'quit' },
-      {
-        name: 'Pause mouse movement',
-        value: 'pause',
-        disabled: worker !== null ? false : `not possible since it is not running.`,
-      },
-      {
-        name: 'Restart mouse movement',
-        value: 'restart',
-        disabled: worker === null ? false : `not possible since it is already running. `,
-      },
-      { name: 'Edit settings', value: 'edit' },
-    ],
-  });
-  switch (operationsAnswer) {
-    case 'quit':
-      worker?.terminate();
-      worker = null;
-      // Deno.exit(0)
-      return;
-    case 'pause':
-      worker?.terminate();
-      worker = null;
-      break;
-    case 'restart':
-      worker = createWorker();
-      break;
-    case 'edit':
-      await editConfig();
-      worker?.terminate();
-      worker = createWorker();
-      break;
-    default:
-      break;
+  while (true) {
+    const operationsAnswer = await select({
+      message: 'Which operation do you want to perform?',
+      choices: [
+        { name: 'Quit the program', value: 'quit' },
+        {
+          name: 'Pause mouse movement',
+          value: 'pause',
+          disabled: worker === null && 'not possible since it is not running.',
+        },
+        {
+          name: 'Restart mouse movement',
+          value: 'restart',
+          disabled: worker !== null && 'not possible since it is already running.',
+        },
+        { name: 'Edit settings', value: 'edit' },
+      ],
+    });
+    switch (operationsAnswer) {
+      case 'quit':
+        await stopWorker();
+        return;
+      case 'pause':
+        await stopWorker();
+        break;
+      case 'restart':
+        worker = createWorker();
+        break;
+      case 'edit':
+        await editConfig();
+        await stopWorker();
+        worker = createWorker();
+        break;
+    }
   }
-  await operations();
 }
 
 async function editConfig() {
-  const tempConfigObj: TempConfigInterface = {};
-
   const delay = await number({
     message: 'Interval between inputs, if not activity is detected in ms.',
     default: 30000,
@@ -72,21 +73,22 @@ async function editConfig() {
     message: 'Should mouse movement be enabled?',
     default: true,
   });
-  if (moveMouse) {
-    tempConfigObj.move = await number({
+  const move = moveMouse
+    ? await number({
       message: 'Movement in pixels',
       default: 100,
       required: true,
-    });
-  }
+    })
+    : undefined;
   const keyboardInput = await confirm({
     message: 'Should keyboard input be enabled?',
     default: false,
   });
+  let keyboardInputKey: nut.Key | undefined;
   if (keyboardInput) {
-    const test = await input({
+    const keyName = await input({
       message: 'Keyboard input key',
-      default: `${nut.Key.ScrollLock}`,
+      default: 'ScrollLock',
       required: true,
       validate: (value) => {
         if (Object.keys(nut.Key).includes(value)) {
@@ -96,14 +98,15 @@ async function editConfig() {
         }
       },
     }) as keyof typeof nut.Key;
-    tempConfigObj.keyboardInputKey = nut.Key[test];
+    keyboardInputKey = nut.Key[keyName];
   }
 
-  let configObj: ConfigInterface = {
-    delay: delay,
-    moveMouse: moveMouse,
-    keyboardInput: keyboardInput,
+  const configObj: Config = {
+    delay,
+    moveMouse,
+    keyboardInput,
+    move,
+    keyboardInputKey,
   };
-  configObj = { ...configObj, ...tempConfigObj };
-  writeConfigToFile(configPath, configObj);
+  writeConfigToFile(CONFIG_PATH, configObj);
 }

@@ -1,28 +1,35 @@
 import * as nut from '@nut-tree-fork/nut-js';
 import type { Key } from '@nut-tree-fork/nut-js';
-import { ConfigInterface } from './interfaces/config.interface.ts';
+import { Config } from './interfaces/config.interface.ts';
+import { CONFIG_PATH, fileExists, readConfigFromFile } from './tools.ts';
 
 /**
  * Class for Mouse Movement
  */
 class MouseMovement {
-  private configPath = 'mouseMovement.config';
-  private config: ConfigInterface = this.getConfig();
+  private config: Config = this.getConfig();
+  private stopRequested = false;
 
   /**
    * Move Movement constructor that calls the asynchronous startMovement function
    */
   constructor() {
-    this.startMovement().then();
+  }
+
+  /**
+   * Signal the loop to exit cleanly after the current iteration.
+   */
+  requestStop(): void {
+    this.stopRequested = true;
   }
 
   /**
    * Start movement by calling both square and keyboardInput
    */
-  private async startMovement(): Promise<void> {
+  async startMovement(): Promise<void> {
     let lastPosition = await nut.mouse.getPosition();
 
-    while (true) {
+    while (!this.stopRequested) {
       const tmpPosition = await nut.mouse.getPosition();
       if (lastPosition.x === tmpPosition.x && lastPosition.y === tmpPosition.y) {
         if (this.config.moveMouse) {
@@ -58,15 +65,25 @@ class MouseMovement {
     await nut.keyboard.releaseKey(key);
   }
 
-  private getConfig(): ConfigInterface {
-    try {
-      Deno.statSync(this.configPath);
-    } catch (error) {
-      console.error("Config should have been already created, but wasn't");
-      throw error;
+  private getConfig(): Config {
+    if (!fileExists(CONFIG_PATH)) {
+      throw new Error("Config should have been already created, but wasn't");
     }
-    return JSON.parse(Deno.readTextFileSync(this.configPath));
+    return readConfigFromFile(CONFIG_PATH);
   }
 }
 
-export default new MouseMovement();
+const mover = new MouseMovement();
+
+self.addEventListener('message', (event: MessageEvent) => {
+  if (event.data === 'stop') {
+    mover.requestStop();
+  }
+});
+
+try {
+  await mover.startMovement();
+} catch (err) {
+  console.error('Mouse movement worker failed:', err);
+  throw err;
+}
