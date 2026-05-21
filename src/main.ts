@@ -1,19 +1,22 @@
-import {Worker} from 'worker_threads';
-import {Key} from "@nut-tree-fork/nut-js";
-import {confirm, input, number, select} from '@inquirer/prompts';
-import {ConfigInterface, TempConfigInterface} from "./interfaces/config.interface.js";
-import {fileExists, readConfigFromFile, writeConfigToFile} from "./tools.js";
+import * as nut from '@nut-tree-fork/nut-js';
+import { confirm, input, number, select } from '@inquirer/prompts';
+import { ConfigInterface, TempConfigInterface } from './interfaces/config.interface.ts';
+import { fileExists, writeConfigToFile } from './tools.ts';
 
 const configPath = 'mouseMovement.config';
 
-const workerPath = './out/mouseMovement.js';
+const workerUrl = new URL('./mouseMovement.ts', import.meta.url).href;
 
 if (!fileExists(configPath)) {
     await editConfig();
 }
-let worker = new Worker(workerPath);
+let worker: Worker | null = createWorker();
 
 await operations();
+
+function createWorker(): Worker {
+    return new Worker(workerUrl, { type: 'module' });
+}
 
 async function operations() {
     let operationsAnswer = await select({
@@ -23,12 +26,12 @@ async function operations() {
                 {
                     name: 'Pause mouse movement',
                     value: 'pause',
-                    disabled: worker.threadId > 0 ? false : `not possible since it is not running.`
+                    disabled: worker !== null ? false : `not possible since it is not running.`
                 },
                 {
                     name: 'Restart mouse movement',
                     value: 'restart',
-                    disabled: worker.threadId < 0 ? false : `not possible since it is already running. `
+                    disabled: worker === null ? false : `not possible since it is already running. `
                 },
                 {name: 'Edit settings', value: 'edit'}
             ]
@@ -36,19 +39,21 @@ async function operations() {
     )
     switch (operationsAnswer) {
         case 'quit':
-            await worker.terminate();
-            // process.exit(0)
+            worker?.terminate();
+            worker = null;
+            // Deno.exit(0)
             return
         case 'pause':
-            await worker.terminate();
+            worker?.terminate();
+            worker = null;
             break;
         case 'restart':
-            worker = new Worker(workerPath);
+            worker = createWorker();
             break;
         case 'edit':
             await editConfig()
-            await worker.terminate()
-            worker = new Worker(workerPath);
+            worker?.terminate()
+            worker = createWorker();
             break;
         default:
             break;
@@ -77,17 +82,17 @@ async function editConfig() {
     if (keyboardInput) {
         let test = await input({
             message: 'Keyboard input key',
-            default: `${Key.ScrollLock}`,
+            default: `${nut.Key.ScrollLock}`,
             required: true,
             validate: (value) => {
-                if (Object.keys(Key).includes(value)) {
+                if (Object.keys(nut.Key).includes(value)) {
                     return true
                 } else {
                     return 'Invalid value'
                 }
             }
-        }) as keyof typeof Key
-        tempConfigObj.keyboardInputKey = Key[test]
+        }) as keyof typeof nut.Key
+        tempConfigObj.keyboardInputKey = nut.Key[test]
     }
 
     let configObj: ConfigInterface = {

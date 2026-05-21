@@ -1,0 +1,23 @@
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+      - github-actions
+
+  # Deno's import map (deno.json) ecosystem. GitHub added native Dependabot
+  # support for Deno in 2024; if your account's Dependabot doesn't recognize
+  # this ecosystem yet, remove this block — npm: specifiers will then need
+  # to be bumped manually in deno.json.
+  - package-ecosystem: deno
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+      - deno

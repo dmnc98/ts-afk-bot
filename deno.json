@@ -1,0 +1,28 @@
+{
+  "tasks": {
+    "start": "deno run --allow-read --allow-write --allow-ffi --allow-env --allow-sys --allow-net src/main.ts",
+    "dev": "deno run --watch --allow-read --allow-write --allow-ffi --allow-env --allow-sys --allow-net src/main.ts",
+    "check": "deno check src/main.ts",
+    "lint": "deno lint",
+    "fmt": "deno fmt",
+    "compile": "deno compile --allow-read --allow-write --allow-ffi --allow-env --allow-sys --allow-net --include src/mouseMovement.ts --output dist/afk-bot src/main.ts"
+  },
+  "imports": {
+    "@nut-tree-fork/nut-js": "npm:@nut-tree-fork/nut-js@^4.2.2",
+    "@inquirer/prompts": "npm:@inquirer/prompts@^5.3.8"
+  },
+  "compilerOptions": {
+    "strict": true,
+    "lib": ["deno.window", "deno.worker", "esnext"]
+  },
+  "fmt": {
+    "lineWidth": 90,
+    "indentWidth": 2,
+    "singleQuote": true
+  },
+  "lint": {
+    "rules": {
+      "tags": ["recommended"]
+    }
+  }
+}
