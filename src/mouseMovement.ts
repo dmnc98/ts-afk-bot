@@ -1,6 +1,6 @@
-import * as nut from '@nut-tree-fork/nut-js';
-import type { Key } from '@nut-tree-fork/nut-js';
-import { ConfigInterface } from './interfaces/config.interface.ts';
+import AutoPilot from 'autopilot/mod.ts';
+import { mouse_move } from 'autopilot/bindings/bindings.ts';
+import { ConfigInterface, Key } from './interfaces/config.interface.ts';
 
 /**
  * Class for Mouse Movement
@@ -8,6 +8,7 @@ import { ConfigInterface } from './interfaces/config.interface.ts';
 class MouseMovement {
   private configPath = 'mouseMovement.config';
   private config: ConfigInterface = this.getConfig();
+  private pilot = new AutoPilot();
 
   /**
    * Move Movement constructor that calls the asynchronous startMovement function
@@ -20,20 +21,20 @@ class MouseMovement {
    * Start movement by calling both square and keyboardInput
    */
   private async startMovement(): Promise<void> {
-    let lastPosition = await nut.mouse.getPosition();
+    let lastPosition = this.pilot.mousePosition();
 
     while (true) {
-      const tmpPosition = await nut.mouse.getPosition();
+      const tmpPosition = this.pilot.mousePosition();
       if (lastPosition.x === tmpPosition.x && lastPosition.y === tmpPosition.y) {
         if (this.config.moveMouse) {
           await this.square();
         }
         if (this.config.keyboardInput && this.config.keyboardInputKey) {
-          await this.keyboardInput(this.config.keyboardInputKey);
+          this.keyboardInput(this.config.keyboardInputKey);
         }
       }
-      lastPosition = await nut.mouse.getPosition();
-      await nut.sleep(this.config.delay);
+      lastPosition = this.pilot.mousePosition();
+      await this.sleep(this.config.delay);
     }
   }
 
@@ -42,10 +43,15 @@ class MouseMovement {
    */
   private async square(): Promise<void> {
     if (this.config.move) {
-      await nut.mouse.move(nut.right(this.config.move));
-      await nut.mouse.move(nut.down(this.config.move));
-      await nut.mouse.move(nut.left(this.config.move));
-      await nut.mouse.move(nut.up(this.config.move));
+      const start = this.pilot.mousePosition();
+      const move = this.config.move;
+      mouse_move({ x: start.x + move, y: start.y, d: null });
+      await this.sleep(1000);
+      mouse_move({ x: start.x + move, y: start.y + move, d: null });
+      await this.sleep(1000);
+      mouse_move({ x: start.x, y: start.y + move, d: null });
+      await this.sleep(1000);
+      mouse_move({ x: start.x, y: start.y, d: null });
     }
   }
 
@@ -53,9 +59,9 @@ class MouseMovement {
    * Press and release the submitted value on the keyboard
    * @param {Key} key Key binding alias which points to a keyboard key
    */
-  private async keyboardInput(key: Key): Promise<void> {
-    await nut.keyboard.pressKey(key);
-    await nut.keyboard.releaseKey(key);
+  private keyboardInput(key: Key): void {
+    this.pilot.toggleKey(key, true);
+    this.pilot.toggleKey(key, false);
   }
 
   private getConfig(): ConfigInterface {
@@ -66,6 +72,10 @@ class MouseMovement {
       throw error;
     }
     return JSON.parse(Deno.readTextFileSync(this.configPath));
+  }
+
+  private sleep(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 }
 

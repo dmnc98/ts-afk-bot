@@ -1,6 +1,10 @@
-import * as nut from '@nut-tree-fork/nut-js';
 import { confirm, input, number, select } from '@inquirer/prompts';
-import { ConfigInterface, TempConfigInterface } from './interfaces/config.interface.ts';
+import {
+  ConfigInterface,
+  Key,
+  KEY_VALUES,
+  TempConfigInterface,
+} from './interfaces/config.interface.ts';
 import { fileExists, writeConfigToFile } from './tools.ts';
 
 const configPath = 'mouseMovement.config';
@@ -81,22 +85,22 @@ async function editConfig() {
   }
   const keyboardInput = await confirm({
     message: 'Should keyboard input be enabled?',
-    default: true,
+    default: false,
   });
   if (keyboardInput) {
     const test = await input({
       message: 'Keyboard input key',
-      default: `${nut.Key.ScrollLock}`,
+      default: 'f15',
       required: true,
       validate: (value) => {
-        if (Object.keys(nut.Key).includes(value)) {
+        if ((KEY_VALUES as readonly string[]).includes(value)) {
           return true;
         } else {
           return 'Invalid value';
         }
       },
-    }) as keyof typeof nut.Key;
-    tempConfigObj.keyboardInputKey = nut.Key[test];
+    }) as Key;
+    tempConfigObj.keyboardInputKey = test;
   }
 
   let configObj: ConfigInterface = {
