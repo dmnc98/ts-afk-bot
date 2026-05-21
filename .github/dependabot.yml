@@ -1,4 +1,6 @@
 version: 2
+# Deno is currently a Dependabot beta ecosystem; opting in is required.
+enable-beta-ecosystems: true
 updates:
   - package-ecosystem: github-actions
     directory: /
@@ -9,10 +11,6 @@ updates:
       - dependencies
       - github-actions
 
-  # Deno's import map (deno.json) ecosystem. GitHub added native Dependabot
-  # support for Deno in 2024; if your account's Dependabot doesn't recognize
-  # this ecosystem yet, remove this block — npm: specifiers will then need
-  # to be bumped manually in deno.json.
   - package-ecosystem: deno
     directory: /
     schedule:
