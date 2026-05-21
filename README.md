@@ -16,8 +16,8 @@ Install Deno: <https://deno.com/manual/getting_started/installation>.
 - `deno task dev` — same, but with `--watch` for auto-reload on file changes.
 
 The first run may prompt for native module access; `@nut-tree-fork/nut-js` requires
-`--allow-ffi` (already included in the task), and Deno will download the npm package
-on first use.
+`--allow-ffi` (already included in the task), and Deno will download the npm package on
+first use.
 
 ## Type check & lint
 
