@@ -12,8 +12,8 @@ Install Deno: <https://deno.com/manual/getting_started/installation>.
 
 ### Native dependencies for `@nut-tree-fork/nut-js`
 
-`@nut-tree-fork/nut-js` links against libnut and needs a few system libraries before
-the first run or compile.
+`@nut-tree-fork/nut-js` links against libnut and needs a few system libraries before the
+first run or compile.
 
 **Linux** — install the X11/XTest/PNG/Xinerama dev headers:
 
@@ -48,8 +48,8 @@ the first run or compile.
   ```
 
 **macOS** — install the Xcode Command Line Tools, then grant the resulting binary
-Accessibility permission (System Settings → Privacy & Security → Accessibility) so it
-can synthesize input:
+Accessibility permission (System Settings → Privacy & Security → Accessibility) so it can
+synthesize input:
 
 ```sh
 xcode-select --install
