@@ -81,7 +81,7 @@ async function editConfig() {
   }
   const keyboardInput = await confirm({
     message: 'Should keyboard input be enabled?',
-    default: true,
+    default: false,
   });
   if (keyboardInput) {
     const test = await input({

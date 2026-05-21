@@ -9,7 +9,7 @@
   },
   "imports": {
     "@nut-tree-fork/nut-js": "npm:@nut-tree-fork/nut-js@^4.2.6",
-    "@inquirer/prompts": "npm:@inquirer/prompts@^5.3.8"
+    "@inquirer/prompts": "npm:@inquirer/prompts@^8.4.3"
   },
   "compilerOptions": {
     "strict": true,
