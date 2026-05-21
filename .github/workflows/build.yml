@@ -15,6 +15,10 @@ jobs:
   build:
     name: Build (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
     strategy:
       fail-fast: false
       matrix:
@@ -31,6 +35,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          persist-credentials: false
 
       - name: Install Deno
         uses: denoland/setup-deno@v2
@@ -43,6 +49,9 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
             libx11-dev libxtst-dev libpng-dev libxinerama-dev
+
+      - name: Format check
+        run: deno fmt --check
 
       - name: Type check
         run: deno task check
@@ -61,6 +70,11 @@ jobs:
             --target ${{ matrix.target }} \
             --output dist/${{ matrix.binary }} \
             src/main.ts
+
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: dist/${{ matrix.binary }}
 
       - name: Upload artifact
         uses: actions/upload-artifact@v7
@@ -83,6 +97,12 @@ jobs:
         with:
           path: dist
           merge-multiple: true
+
+      - name: Generate SHA256 checksums
+        run: |
+          cd dist
+          shasum -a 256 * > SHA256SUMS
+          cat SHA256SUMS
 
       - name: Publish release
         uses: softprops/action-gh-release@v3
