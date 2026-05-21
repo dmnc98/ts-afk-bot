@@ -1,12 +1,9 @@
 import { Key } from '@nut-tree-fork/nut-js';
 
-export interface ConfigInterface extends TempConfigInterface {
+export interface Config {
   delay: number;
   moveMouse: boolean;
   keyboardInput: boolean;
-}
-
-export interface TempConfigInterface {
   move?: number;
   keyboardInputKey?: Key;
 }
