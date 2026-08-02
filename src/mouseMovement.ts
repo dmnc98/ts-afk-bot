@@ -2,6 +2,7 @@ import * as nut from '@nut-tree-fork/nut-js';
 import type { Key } from '@nut-tree-fork/nut-js';
 import { Config } from './interfaces/config.interface.ts';
 import { CONFIG_PATH, fileExists, readConfigFromFile } from './tools.ts';
+import { t } from './i18n/index.ts';
 
 /**
  * Class for Mouse Movement
@@ -67,7 +68,7 @@ class MouseMovement {
 
   private getConfig(): Config {
     if (!fileExists(CONFIG_PATH)) {
-      throw new Error("Config should have been already created, but wasn't");
+      throw new Error(t('configMissing'));
     }
     return readConfigFromFile(CONFIG_PATH);
   }
@@ -84,6 +85,6 @@ self.addEventListener('message', (event: MessageEvent) => {
 try {
   await mover.startMovement();
 } catch (err) {
-  console.error('Mouse movement worker failed:', err);
+  console.error(t('workerFailed'), err);
   throw err;
 }

@@ -2,6 +2,7 @@ import * as nut from '@nut-tree-fork/nut-js';
 import { confirm, input, number, select } from '@inquirer/prompts';
 import { Config } from './interfaces/config.interface.ts';
 import { CONFIG_PATH, fileExists, writeConfigToFile } from './tools.ts';
+import { t } from './i18n/index.ts';
 
 const workerUrl = new URL('./mouseMovement.ts', import.meta.url).href;
 
@@ -28,20 +29,20 @@ async function stopWorker(): Promise<void> {
 async function operations() {
   while (true) {
     const operationsAnswer = await select({
-      message: 'Which operation do you want to perform?',
+      message: t('operationsPrompt'),
       choices: [
-        { name: 'Quit the program', value: 'quit' },
+        { name: t('quit'), value: 'quit' },
         {
-          name: 'Pause mouse movement',
+          name: t('pause'),
           value: 'pause',
-          disabled: worker === null && 'not possible since it is not running.',
+          disabled: worker === null && t('pauseDisabled'),
         },
         {
-          name: 'Restart mouse movement',
+          name: t('restart'),
           value: 'restart',
-          disabled: worker !== null && 'not possible since it is already running.',
+          disabled: worker !== null && t('restartDisabled'),
         },
-        { name: 'Edit settings', value: 'edit' },
+        { name: t('edit'), value: 'edit' },
       ],
     });
     switch (operationsAnswer) {
@@ -65,36 +66,36 @@ async function operations() {
 
 async function editConfig() {
   const delay = await number({
-    message: 'Interval between inputs, if not activity is detected in ms.',
+    message: t('delayPrompt'),
     default: 30000,
     required: true,
   }) as number;
   const moveMouse = await confirm({
-    message: 'Should mouse movement be enabled?',
+    message: t('moveMousePrompt'),
     default: true,
   });
   const move = moveMouse
     ? await number({
-      message: 'Movement in pixels',
+      message: t('movePixelsPrompt'),
       default: 100,
       required: true,
     })
     : undefined;
   const keyboardInput = await confirm({
-    message: 'Should keyboard input be enabled?',
+    message: t('keyboardInputPrompt'),
     default: false,
   });
   let keyboardInputKey: nut.Key | undefined;
   if (keyboardInput) {
     const keyName = await input({
-      message: 'Keyboard input key',
+      message: t('keyboardKeyPrompt'),
       default: 'ScrollLock',
       required: true,
       validate: (value) => {
         if (Object.keys(nut.Key).includes(value)) {
           return true;
         } else {
-          return 'Invalid value';
+          return t('invalidValue');
         }
       },
     }) as keyof typeof nut.Key;
